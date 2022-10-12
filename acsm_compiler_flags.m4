@@ -148,6 +148,18 @@ AC_DEFUN([ACSM_DETERMINE_CXX_BRAND],
                 ])
         ])
 
+  dnl Nvidia C++?
+  AS_IF([test "x$compiler_brand_detected" = "xno"],
+        [
+          is_nvcc="`($CXX -V 2>&1) | grep 'NVIDIA'`"
+          AS_IF([test "x$is_nvcc" != "x"],
+          [
+            AC_MSG_RESULT(<<< C++ compiler is NVIDIA C++ >>>)
+            ACSM_GXX_VERSION=nvidia
+            compiler_brand_detected=yes
+          ])
+        ])
+
   dnl Portland Group C++?
   AS_IF([test "x$compiler_brand_detected" = "xno"],
         [
@@ -424,6 +436,25 @@ AC_DEFUN([ACSM_SET_CXX_FLAGS],
                                   ],
                                   [AC_MSG_RESULT(Unknown Intel compiler, "$ACSM_GXX_VERSION")])
                        ],
+
+            [nvidia], [
+                                ACSM_CXXFLAGS_DBG="$ACSM_CXXFLAGS_DBG -O0 -g -pedantic -Wno-long-long -Wunused -Wuninitialized"
+                                ACSM_CXXFLAGS_DEVEL="$ACSM_CXXFLAGS_DEVEL -O2 -g -pedantic -Wno-long-long -Wunused -Wuninitialized"
+                                ACSM_CXXFLAGS_OPT="$ACSM_CXXFLAGS_OPT -O2"
+
+                                ACSM_NODEPRECATEDFLAG="-Wno-deprecated-declarations"
+
+                                ACSM_CFLAGS_DBG="$ACSM_CFLAGS_DBG -O0 -g"
+                                ACSM_CFLAGS_DEVEL="$ACSM_CFLAGS_DEVEL -O2 -g"
+                                ACSM_CFLAGS_OPT="$ACSM_CFLAGS_OPT -O2"
+
+                                dnl Disable exception handling if we dont use it
+                                AS_IF([test "$enableexceptions" = no],
+                                      [
+                                        ACSM_CXXFLAGS_DBG="$ACSM_CXXFLAGS_DBG --no_exceptions"
+                                        ACSM_CXXFLAGS_OPT="$ACSM_CXXFLAGS_OPT --no_exceptions"
+                                      ])
+                              ],
 
             [portland_group], [
                                 ACSM_CXXFLAGS_DBG="$ACSM_CXXFLAGS_DBG -g --no_using_std"
