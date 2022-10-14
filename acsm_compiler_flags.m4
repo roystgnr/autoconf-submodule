@@ -438,9 +438,26 @@ AC_DEFUN([ACSM_SET_CXX_FLAGS],
                        ],
 
             [nvidia], [
-                                ACSM_CXXFLAGS_DBG="$ACSM_CXXFLAGS_DBG -O0 -g -pedantic -Wno-long-long -Wunused -Wuninitialized"
-                                ACSM_CXXFLAGS_DEVEL="$ACSM_CXXFLAGS_DEVEL -O2 -g -pedantic -Wno-long-long -Wunused -Wuninitialized"
-                                ACSM_CXXFLAGS_OPT="$ACSM_CXXFLAGS_OPT -O2"
+                          dnl Disable some warning messages on NVIDIA compilers:
+                          dnl 11:   unrecognized preprocessing directive
+                          dnl       "#warning".  It doesn't recognize "#warning".
+                          dnl 111:  statement is unreachable
+                          dnl       We have a ton of return-statement-after-error-thrown code
+                          dnl       specifically to keep *other* compilers' warnings happy
+                          dnl 177:  declared but never referenced
+                          dnl       This hurts to disable, but NVIDIA doesn't understand RAII!  It
+                          dnl       complains about scoped locks!  About factory patterns!
+                          dnl       Need to suppress this after -Wunused or that overrides it.
+                          dnl 445:  template parameter "Scalar1" is not used in declaring the
+                          dnl       parameter types of function template
+                          dnl       This warning was generated from one of the type_vector.h
+                          dnl       constructors that uses some SFINAE tricks.
+
+                          dnl --display_error_number is really useful when we need a pragma to disable
+                          dnl a newly-cropped-up overzealous error...
+                                ACSM_CXXFLAGS_DBG="$ACSM_CXXFLAGS_DBG -O0 --display_error_number -g -pedantic -Wno-long-long -Wunused -Wuninitialized --diag_suppress=11,111,177,445"
+                                ACSM_CXXFLAGS_DEVEL="$ACSM_CXXFLAGS_DEVEL -O2 --display_error_number -g -pedantic -Wno-long-long -Wunused -Wuninitialized --diag_suppress=11,111,177,445"
+                                ACSM_CXXFLAGS_OPT="$ACSM_CXXFLAGS_OPT -O2 --display_error_number --diag_suppress=11,111,177,445"
 
                                 ACSM_NODEPRECATEDFLAG="-Wno-deprecated-declarations"
 
